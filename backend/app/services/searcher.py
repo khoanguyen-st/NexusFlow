@@ -1,8 +1,6 @@
 from uuid import UUID
 from sqlalchemy.ext.asyncio import AsyncSession
-from sqlalchemy import text
 
-from app.services.embedder import EmbedderService
 from app.schemas import SearchResult
 
 
@@ -11,7 +9,7 @@ class SearcherService:
     
     def __init__(self, db: AsyncSession):
         self.db = db
-        self.embedder = EmbedderService()
+        # TODO: Initialize embedder service
     
     async def search(
         self,
@@ -22,50 +20,18 @@ class SearcherService:
         """
         Search for files semantically similar to the query.
         
-        Args:
-            project_id: UUID of the project to search in
-            query: Search query text
-            top_k: Number of results to return
-            
-        Returns:
-            List of search results with similarity scores
+        TODO: Implement semantic search:
+        1. Generate embedding for the query using embedder
+        2. Use pgvector's cosine similarity operator (<=>)
+        3. Query file_embeddings table:
+           - Filter by project_id
+           - Order by similarity (embedding <=> query_embedding)
+           - Limit to top_k results
+        4. Return list of SearchResult objects with:
+           - file_path, file_name, content (truncated)
+           - similarity score (1 - distance)
+        
+        Hint: Use SQLAlchemy text() for raw SQL with pgvector operators
         """
-        # Generate query embedding
-        query_embedding = await self.embedder.embed_text(query)
-        
-        # Convert to string for SQL
-        embedding_str = "[" + ",".join(map(str, query_embedding)) + "]"
-        
-        # Perform vector similarity search using pgvector
-        sql = text("""
-            SELECT 
-                file_path,
-                file_name,
-                content,
-                1 - (embedding <=> :embedding::vector) as similarity
-            FROM file_embeddings
-            WHERE project_id = :project_id
-            ORDER BY embedding <=> :embedding::vector
-            LIMIT :limit
-        """)
-        
-        result = await self.db.execute(
-            sql,
-            {
-                "project_id": str(project_id),
-                "embedding": embedding_str,
-                "limit": top_k,
-            }
-        )
-        
-        rows = result.fetchall()
-        
-        return [
-            SearchResult(
-                file_path=row.file_path,
-                file_name=row.file_name,
-                content=row.content[:500] if row.content else "",  # Truncate for response
-                similarity=float(row.similarity),
-            )
-            for row in rows
-        ]
+        # TODO: Implement semantic search
+        raise NotImplementedError("Search not yet implemented")
