@@ -15,7 +15,7 @@ class Settings(BaseSettings):
     
     # Embedding settings
     embedding_model: str = "text-embedding-3-small"
-    embedding_dimension: int = 1536
+    embedding_dimension: int = 1500
     
     # LLM settings
     llm_model: str = "gpt-4o-mini"
