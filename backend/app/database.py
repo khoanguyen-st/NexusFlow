@@ -1,11 +1,12 @@
 from sqlalchemy.ext.asyncio import create_async_engine, AsyncSession, async_sessionmaker
 from sqlalchemy.orm import DeclarativeBase, Mapped, mapped_column
-from sqlalchemy.dialects.postgresql import UUID
-from sqlalchemy import String, Text, Integer, DateTime, text, ForeignKey, UniqueConstraint
+from sqlalchemy.dialects.postgresql import UUID, JSONB, ARRAY
+from sqlalchemy import String, Text, Integer, Float, DateTime, text, ForeignKey, UniqueConstraint
 from app.config import get_settings
 from datetime import datetime
 import uuid
 from pgvector.sqlalchemy import Vector
+from typing import Any
 
 settings = get_settings()
 
@@ -127,6 +128,42 @@ class FileEmbedding(Base):
     
     # embedding vector(1536)
     embedding: Mapped[list[float] | None] = mapped_column(Vector(1536), nullable=True)
+    
+    # created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+    created_at: Mapped[datetime] = mapped_column(
+        DateTime, 
+        server_default=text("CURRENT_TIMESTAMP"),
+        nullable=False
+    )
+    
+class Plan(Base):
+    """ class for Plans table """
+    
+    # id UUID PRIMARY KEY DEFAULT gen_random_uuid()
+    id: Mapped[uuid.UUID] = mapped_column(
+        UUID(as_uuid=True), 
+        primary_key=True, 
+        server_default=text("gen_random_uuid()") 
+    )
+    
+    # project_id UUID REFERENCES projects(id) ON DELETE CASCADE
+    project_id: Mapped[uuid.UUID] = mapped_column(
+        UUID(as_uuid=True),
+        ForeignKey("projects.id", ondelete="CASCADE"),
+        nullable=False
+    )
+    
+    # task_description TEXT NOT NULL
+    content: Mapped[str] = mapped_column(Text, nullable=False)
+    
+    # plan_data JSONB NOT NULL
+    plan_data: Mapped[dict[str, Any]] = mapped_column(JSONB, nullable=False)
+    
+    # context_files TEXT[]
+    context_files: Mapped[list[str] | None] = mapped_column(ARRAY(Text), nullable=True)
+    
+    # confidence FLOAT
+    confidence: Mapped[float | None] = mapped_column(Float, nullable=True)
     
     # created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
     created_at: Mapped[datetime] = mapped_column(
