@@ -1,42 +1,51 @@
+import logging
+import google.generativeai as genai
 from app.config import get_settings
 
 settings = get_settings()
-
+logger = logging.getLogger(__name__)
 
 class EmbedderService:
     """Service for generating text embeddings."""
-    
     def __init__(self):
-        # TODO: Initialize Gemini client based on settings.llm_provider
-        # TODO: Set up API keys from settings
-        pass
-    
+        self.api_key = settings.gemini_api_key
+        
+        if self.api_key:
+            genai.configure(api_key=self.api_key)
+        else:
+            logger.warning("NO GEMINI_API_KEY. Embedding doesn't work")
+            
     async def embed_text(self, text: str) -> list[float]:
-        """
-        Generate embedding for a text.
-        
-        TODO: Implement this method:
-        1. Truncate text if too long (max 8000 chars)
-        2. Call appropriate embedding API (Gemini)
-        3. Return embedding vector as list of floats
-        
-        Hint: Use Gemini's embedding-001 model
-        Dimension: 1536
-        """
-        # TODO: Implement embedding generation
-        raise NotImplementedError("Embedding not yet implemented")
+        if not self.api_key:
+            raise ValueError("GEMINI_API_KEY is not set.")
+
+        try:
+            if len(text) > 8000:
+                text = text[:8000]
+            
+            text = text.replace("\n", " ")
+
+            result = genai.embed_content(
+                model="models/embedding-001",
+                content=text,
+                task_type="retrieval_document"
+            )
+
+            return result['embedding']
+            
+        except Exception as e:
+            logger.error(f"failed to embedding: {e}")
+            raise e
     
     async def embed_batch(self, texts: list[str]) -> list[list[float]]:
-        """
-        Generate embeddings for multiple texts.
+        embeddings = []
         
-        Args:
-            texts: List of texts to embed
-            
-        Returns:
-            List of embedding vectors
-        TODO: Implement batch embedding for efficiency:
-        1. For Gemini: process one by one
-        """
-        # TODO: Implement batch embedding
-        raise NotImplementedError("Batch embedding not yet implemented")
+        for text in texts:
+            try:
+                vector = await self.embed_text(text)
+                embeddings.append(vector)
+            except Exception as e:
+                logger.error(f"error during batch processing: {e}")
+                raise e
+                
+        return embeddings
