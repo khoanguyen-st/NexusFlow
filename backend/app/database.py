@@ -1,6 +1,10 @@
 from sqlalchemy.ext.asyncio import create_async_engine, AsyncSession, async_sessionmaker
-from sqlalchemy.orm import DeclarativeBase
+from sqlalchemy.orm import DeclarativeBase, Mapped, mapped_column
+from sqlalchemy.dialects.postgresql import UUID
+from sqlalchemy import String, Text, Integer, DateTime, text
 from app.config import get_settings
+from datetime import datetime
+import uuid
 
 settings = get_settings()
 
@@ -25,6 +29,58 @@ async_session_maker = async_sessionmaker(
 class Base(DeclarativeBase):
     """Base class for all database models."""
     pass
+
+class Project(Base):
+    """ class for projects table """
+    __tablename__ = "projects"
+    
+    # id UUID PRIMARY KEY DEFAULT gen_random_uuid()
+    id: Mapped[uuid.UUID] = mapped_column(
+        UUID(as_uuid=True), 
+        primary_key=True, 
+        server_default=text("gen_random_uuid()") 
+    )
+
+    # name VARCHAR(255) NOT NULL
+    name: Mapped[str] = mapped_column(String(255), nullable=False)
+
+    # path VARCHAR(500) NOT NULL
+    path: Mapped[str] = mapped_column(String(500), nullable=False)
+
+    # description TEXT
+    description: Mapped[str | None] = mapped_column(Text, nullable=True)
+
+    # status VARCHAR(50) DEFAULT 'pending'
+    status: Mapped[str] = mapped_column(
+        String(50), 
+        server_default="pending", 
+        default="pending" 
+    )
+
+    # file_count INTEGER DEFAULT 0
+    file_count: Mapped[int] = mapped_column(
+        Integer, 
+        server_default=text("0"), 
+        default=0
+    )
+
+    # indexed_at TIMESTAMP
+    indexed_at: Mapped[datetime | None] = mapped_column(DateTime, nullable=True)
+
+    # created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+    created_at: Mapped[datetime] = mapped_column(
+        DateTime, 
+        server_default=text("CURRENT_TIMESTAMP"),
+        nullable=False
+    )
+
+    # updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+    updated_at: Mapped[datetime] = mapped_column(
+        DateTime, 
+        server_default=text("CURRENT_TIMESTAMP"), 
+        onupdate=datetime.now,
+        nullable=False
+    )
 
 
 async def get_db() -> AsyncSession:
