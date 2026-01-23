@@ -1,10 +1,11 @@
 from sqlalchemy.ext.asyncio import create_async_engine, AsyncSession, async_sessionmaker
 from sqlalchemy.orm import DeclarativeBase, Mapped, mapped_column
 from sqlalchemy.dialects.postgresql import UUID
-from sqlalchemy import String, Text, Integer, DateTime, text
+from sqlalchemy import String, Text, Integer, DateTime, text, ForeignKey, UniqueConstraint
 from app.config import get_settings
 from datetime import datetime
 import uuid
+from pgvector.sqlalchemy import Vector
 
 settings = get_settings()
 
@@ -82,6 +83,57 @@ class Project(Base):
         nullable=False
     )
 
+class FileEmbedding(Base):
+    """ class for file_embeddings table """
+    __tablename__ = "file_embeddings"
+    
+    # UNIQUE(project_id, file_path, chunk_index)
+    __table_args__ = (
+        UniqueConstraint('project_id', 'file_path', 'chunk_index', name='uq_project_file_chunk'),
+    )
+    
+    # id UUID PRIMARY KEY DEFAULT gen_random_uuid()
+    id: Mapped[uuid.UUID] = mapped_column(
+        UUID(as_uuid=True), 
+        primary_key=True, 
+        server_default=text("gen_random_uuid()") 
+    )
+    
+    # project_id UUID REFERENCES projects(id) ON DELETE CASCADE
+    project_id: Mapped[uuid.UUID] = mapped_column(
+        UUID(as_uuid=True),
+        ForeignKey("projects.id", ondelete="CASCADE"),
+        nullable=False
+    )
+    
+    # file_path VARCHAR(500) NOT NULL
+    file_path: Mapped[str] = mapped_column(String(500), nullable=False)
+    
+    # file_name VARCHAR(255) NOT NULL
+    file_name: Mapped[str] = mapped_column(String(255), nullable=False)
+    
+    # extension VARCHAR(50)
+    extension: Mapped[str] = mapped_column(String(50), nullable=True)
+    
+    # content TEXT
+    content: Mapped[str | None] = mapped_column(Text, nullable=True)
+    
+    # chunk_index INTEGER DEFAULT 0
+    chunk_index: Mapped[int] = mapped_column(
+        Integer, 
+        server_default=text("0"), 
+        default=0
+    )
+    
+    # embedding vector(1536)
+    embedding: Mapped[list[float] | None] = mapped_column(Vector(1536), nullable=True)
+    
+    # created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+    created_at: Mapped[datetime] = mapped_column(
+        DateTime, 
+        server_default=text("CURRENT_TIMESTAMP"),
+        nullable=False
+    )
 
 async def get_db() -> AsyncSession:
     """Dependency to get database session."""
