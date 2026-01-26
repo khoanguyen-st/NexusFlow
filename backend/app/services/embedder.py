@@ -33,8 +33,14 @@ class EmbedderService:
                     task_type="retrieval_document"
                 )
             )
+            
+            await asyncio.sleep(0.1)
+            
+            embedding = result['embedding']
+            if len(embedding) != 768:
+                logger.warning(f"Unexpected dimension: {len(embedding)}, expected 768")
 
-            return result['embedding']
+            return embedding
             
         except Exception as e:
             logger.error(f"failed to embedding: {e}")
