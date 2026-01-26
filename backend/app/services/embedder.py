@@ -1,4 +1,5 @@
 import logging
+import asyncio
 import google.generativeai as genai
 from app.config import get_settings
 
@@ -19,16 +20,18 @@ class EmbedderService:
         if not self.api_key:
             raise ValueError("GEMINI_API_KEY is not set.")
 
-        try:
-            if len(text) > 8000:
-                text = text[:8000]
-            
-            text = text.replace("\n", " ")
+        loop = asyncio.get_event_loop()
+        
+        text = text[:8000].replace("\n", " ")
 
-            result = genai.embed_content(
-                model="models/embedding-001",
-                content=text,
-                task_type="retrieval_document"
+        try:
+            result = await loop.run_in_executor(
+                None,  
+                lambda: genai.embed_content(
+                    model="models/embedding-001",
+                    content=text,
+                    task_type="retrieval_document"
+                )
             )
 
             return result['embedding']
@@ -40,12 +43,12 @@ class EmbedderService:
     async def embed_batch(self, texts: list[str]) -> list[list[float]]:
         embeddings = []
         
-        for text in texts:
-            try:
-                vector = await self.embed_text(text)
-                embeddings.append(vector)
-            except Exception as e:
-                logger.error(f"error during batch processing: {e}")
-                raise e
-                
-        return embeddings
+        tasks = [self.embed_text(text) for text in texts]
+        
+        try:
+            embeddings = await asyncio.gather(*tasks)
+            return embeddings
+            
+        except Exception as e:
+            logger.error(f"error during batch processing: {e}")
+            raise e

@@ -1,4 +1,5 @@
 import logging
+import asyncio
 from pathlib import Path
 from uuid import UUID
 from datetime import datetime
@@ -36,17 +37,29 @@ class IndexerService:
 
             await db.execute(delete(FileEmbedding).where(FileEmbedding.project_id == project_id))
             await db.commit()
-            
+
             files = self._scan_directory(project_path)
             
+            semaphore = asyncio.Semaphore(5)
+
+            async def process_wrapper(file_info):
+                async with semaphore:
+                    return await self._create_embedding_data(project_id, file_info)
+
+            tasks = [process_wrapper(f) for f in files]
+            
+            results = await asyncio.gather(*tasks, return_exceptions=True)
+        
             indexed_count = 0
-            for file_info in files:
-                try:
-                    await self._index_file(db, project_id, file_info)
-                    indexed_count += 1
-                except Exception as e:
-                    logger.warning(f"Skipping file {file_info.get('path')}: {e}")
+            for res in results:
+                if isinstance(res, Exception):
+                    logger.warning(f"File processing failed: {res}")
                     continue
+                if res is None:
+                    continue
+                
+                db.add(res)
+                indexed_count += 1
             
             project.status = 'ready'
             project.file_count = indexed_count
@@ -75,15 +88,8 @@ class IndexerService:
 
             if file_path.name.startswith('.'):
                 continue
-            if "node_modules" in path_str:
-                continue
-            if ".git" in path_str:
-                continue
-            if "venv" in path_str:
-                continue
-            if "__pycache__" in path_str:
-                continue
-            if "dist" in path_str or "build" in path_str:
+
+            if any(skip_dir in path_str for skip_dir in SKIP_DIRS):
                 continue
 
             if file_path.suffix not in self.allowed_extensions:
@@ -103,19 +109,18 @@ class IndexerService:
             })
         return files_to_process
 
-    
-    async def _index_file(self, db: AsyncSession, project_id: UUID, file_info: dict) -> None:
+    async def _create_embedding_data(self, project_id: UUID, file_info: dict) -> FileEmbedding | None:
+
         try:
             file_path = Path(file_info['path'])
-            
             content = file_path.read_text(encoding='utf-8', errors='replace')
 
             if not content.strip():
-                return
+                return None
 
             embedding_vector = await self.embedder.embed_text(content)
 
-            file_embedding = FileEmbedding(
+            return FileEmbedding(
                 project_id=project_id,
                 file_path=file_info['relative_path'],
                 file_name=file_info['name'],
@@ -123,8 +128,6 @@ class IndexerService:
                 content=content,
                 embedding=embedding_vector
             )
-            
-            db.add(file_embedding)
-            
         except Exception as e:
-            logger.warning(f"Skipping file: {e}")
+            logger.warning(f"Failed to process {file_info.get('path')}: {e}")
+            return None
