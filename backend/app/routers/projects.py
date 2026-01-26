@@ -54,8 +54,6 @@ router = APIRouter()
 #     3. Return project
 #     """
 #     pass
-    
-    pass
 
 
 # @router.delete("/{project_id}")
