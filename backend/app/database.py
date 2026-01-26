@@ -140,6 +140,7 @@ class FileEmbedding(Base):
     
 class Plan(Base):
     """ class for Plans table """
+    __tablename__ = "plans"
     
     # id UUID PRIMARY KEY DEFAULT gen_random_uuid()
     id: Mapped[uuid.UUID] = mapped_column(
