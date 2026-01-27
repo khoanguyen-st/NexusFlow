@@ -9,13 +9,13 @@ class Settings(BaseSettings):
     database_url: str = "postgresql://nexusflow:nexusflow123@localhost:5432/nexusflow"
     
     # LLM Provider
-    llm_provider: str = "openai"  # "openai" or "gemini"
+    llm_provider: str = "openai"  
     openai_api_key: str = ""
     gemini_api_key: str = ""
     
     # Embedding settings
     embedding_model: str = "text-embedding-3-small"
-    embedding_dimension: int = 1536
+    embedding_dimension: int = 768  
     
     # LLM settings
     llm_model: str = "gpt-4o-mini"
@@ -40,5 +40,4 @@ class Settings(BaseSettings):
 @lru_cache()
 def get_settings() -> Settings:
     """Get cached settings instance."""
-    return Settings()\
-    
+    return Settings()
