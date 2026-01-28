@@ -7,24 +7,13 @@ from app.schemas import ProjectCreate, ProjectResponse, IndexResponse
 from sqlalchemy import select
 from app.models import Project
 from app.services.indexer import IndexerService
+import os
 
 router = APIRouter()
 
-# TODO: Implement CRUD endpoints for projects
-# Reference: https://fastapi.tiangulo.com/tutorial/
-
 @router.get("", response_model=list[ProjectResponse])
 async def list_projects(db: AsyncSession = Depends(get_db)):
-    """
-    TODO: Implement list all projects endpoint
-    Steps:
-    1. Query all projects from database using SQLAlchemy
-    2. Order by created_at descending
-    3. Return list of projects
-    
-    Hint: Use db.execute(select(Project).order_by(...))
-    """
-    
+
     """
     GET /api/projects
     Returns: List of all projects
@@ -43,20 +32,16 @@ async def create_project(
     db: AsyncSession = Depends(get_db)
 ):
     """
-    TODO: Implement create project endpoint
-    Steps:
-    1. Create new Project instance with data from request
-    2. Set status to 'pending'
-    3. Add to database session
-    4. Commit and refresh
-    5. Return created project
-    """
-    
-    """
     POST /api/projects
     Body: { name, path, description? }
     Returns: Created project
     """
+
+    if not os.path.exists(project.path):
+        raise HTTPException(status_code=400, detail="Project path does not exist")
+    
+    if not os.path.isdir(project.path):
+        raise HTTPException(status_code=400, detail="Project path must be a directory")
     
     new_project = Project(
         name=project.name,
@@ -75,14 +60,6 @@ async def get_project(
     project_id: UUID,
     db: AsyncSession = Depends(get_db)
 ):
-    """
-    TODO: Implement get project by ID endpoint
-    Steps:
-    1. Query project from database by ID
-    2. If not found, raise HTTPException with 404
-    3. Return project
-    """
-    
     """
     GET /api/projects/{id}
     Returns: Single project or 404
@@ -103,18 +80,6 @@ async def delete_project(
     project_id: UUID,
     db: AsyncSession = Depends(get_db)
 ):
-    """
-    TODO: Implement delete project endpoint
-    Steps:
-    1. Query project from database by ID
-    2. If not found, raise HTTPException with 404
-    3. Delete project from database
-    4. Commit changes
-    5. Return success message
-    
-    Note: Embeddings will be auto-deleted due to CASCADE
-    """
-    
     """
     DELETE /api/projects/{id}
     Returns: Success message
@@ -139,20 +104,6 @@ async def index_project(
     background_tasks: BackgroundTasks,
     db: AsyncSession = Depends(get_db)
 ):
-    """
-    TODO: Implement project indexing endpoint
-    Steps:
-    1. Get project by ID from database
-    2. If not found, raise HTTPException with 404
-    3. Update project status to 'indexing'
-    4. Commit the status change
-    5. Add indexer.index_project() to background_tasks
-    6. Return IndexResponse with status 'indexing'
-    
-    Hint: Use background_tasks.add_task(function, *args)
-    Hint: IndexerService() needs to be instantiated
-    """
-    
     """
     POST /api/projects/{id}/index
     Starts indexing in background

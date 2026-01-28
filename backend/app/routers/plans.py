@@ -10,28 +10,11 @@ from app.models import Plan
 
 router = APIRouter()
 
-# TODO: Implement AI plan generation endpoints
-
 @router.post("/generate", response_model=PlanResponse)
 async def generate_plan(
     request: PlanGenerateRequest,
     db: AsyncSession = Depends(get_db)
 ):
-    """
-    TODO: Implement AI plan generation endpoint
-    Steps:
-    1. Create PlannerService instance with db session
-    2. Call planner.generate_plan() with:
-       - project_id from request
-       - task from request
-    3. Return generated PlanResponse
-    4. Handle errors:
-       - ValueError -> HTTPException 400 (validation errors)
-       - General Exception -> HTTPException 500 (server errors)
-    
-    This is the core AI feature that analyzes code and generates plans!
-    """
-    
     """
     POST /api/plans/generate
     Body: { project_id, task }
@@ -58,17 +41,6 @@ async def get_plan(
     db: AsyncSession = Depends(get_db)
 ):
     """
-    TODO: Implement get plan by ID endpoint
-    Steps:
-    1. Query Plan from database by ID
-    2. If not found, raise HTTPException with 404
-    3. Transform Plan model to PlanResponse
-    4. Return PlanResponse
-    
-    Hint: plan.plan_data is JSONB, needs to be unpacked
-    """
-    
-    """
     GET /api/plans/{id}
     Returns: Plan details
     """
@@ -79,7 +51,6 @@ async def get_plan(
     if not plan:
         raise HTTPException(status_code=404, detail="Plan not found")
     
-    from app.schemas import PlanData
     return PlanResponse(
         id=plan.id,
         project_id=plan.project_id,
@@ -96,15 +67,6 @@ async def list_project_plans(
     project_id: UUID,
     db: AsyncSession = Depends(get_db)
 ):
-    """
-    TODO: Implement list all plans for a project endpoint
-    Steps:
-    1. Query all Plans for the given project_id
-    2. Order by created_at descending
-    3. Transform each Plan to PlanResponse
-    4. Return list of PlanResponses
-    """
-    
     """
     GET /api/plans/project/{project_id}
     Returns: All plans for a project
