@@ -8,7 +8,7 @@ from sqlalchemy import select, delete
 from sqlalchemy.ext.asyncio import AsyncSession
 from app.config import get_settings
 from app.services.embedder import EmbedderService
-from app.database import Project, FileEmbedding
+from app.models.models import Project, FileEmbedding
 
 settings = get_settings()
 logger = logging.getLogger(__name__)

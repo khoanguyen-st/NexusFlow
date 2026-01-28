@@ -124,7 +124,7 @@ async def index_project(
     
     # Run in background
     indexer = IndexerService()
-    background_tasks.add_task(indexer.index_project, project_id, project.path)
+    background_tasks.add_task(indexer.index_project, db, project_id, project.path)
     
     return IndexResponse(
         project_id=project_id,
