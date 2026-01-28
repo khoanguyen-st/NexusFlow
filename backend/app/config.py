@@ -9,8 +9,7 @@ class Settings(BaseSettings):
     database_url: str = "postgresql://nexusflow:nexusflow123@localhost:5432/nexusflow"
     
     # LLM Provider
-    llm_provider: str = "openai"  
-    openai_api_key: str = ""
+    llm_provider: str = "gemini"  
     gemini_api_key: str = ""
     
     # Embedding settings
@@ -18,7 +17,7 @@ class Settings(BaseSettings):
     embedding_dimension: int = 768  
     
     # LLM settings
-    llm_model: str = "gpt-4o-mini"
+    llm_model: str = "gemini-2.5-flash-lite"
     llm_temperature: float = 0.2
     llm_max_tokens: int = 4096
     
