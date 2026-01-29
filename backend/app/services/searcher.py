@@ -1,16 +1,15 @@
 from uuid import UUID
 from sqlalchemy.ext.asyncio import AsyncSession
-from sqlalchemy import select, text
+from sqlalchemy import select
 from app.schemas import SearchResult
 from app.services.embedder import EmbedderService
 from app.models.models import FileEmbedding
-
 
 class SearcherService:
     """Service for semantic search over indexed files."""
     
     def __init__(self, db: AsyncSession):
-        self.embedder = EmbedderService()
+        self.embedder = embedder or EmbedderService()
         self.db = db
     
     async def search(
@@ -24,7 +23,16 @@ class SearcherService:
         """
 
         # Generate embedding for the query
-        query_embedding = await self.embedder.embed_text(query)
+        try:
+            query_embedding = await self.embedder.embed_text(query)
+            
+            if not query_embedding:
+                    logger.warning(f"Empty embedding generated for query: {query[:50]}")
+                    return []
+                
+        except Exception as e:
+            logger.error(f"Failed to generate embedding: {e}")
+            raise RuntimeError(f"Embedding generation failed: {e}")
         
         # Search using pgvector cosine distance
         distance_col = FileEmbedding.embedding.cosine_distance(query_embedding).label("distance")
@@ -39,20 +47,12 @@ class SearcherService:
         result = await self.db.execute(stmt)
         rows = result.all()
         
-        search_results = []
-        for row in rows:
-            file_embedding = row[0]
-            distance = row[1]
-            
-            similarity = 1.0 - distance
-            
-            search_results.append(
-                SearchResult(
-                    file_path=file_embedding.file_path,
-                    file_name=file_embedding.file_name,
-                    content=file_embedding.content or "",
-                    similarity=float(similarity)
-                )
+        return [
+            SearchResult(
+                file_path=file_embedding.file_path,
+                file_name=file_embedding.file_name,
+                content=file_embedding.content or "",
+                similarity=float(1.0 - distance)
             )
-            
-        return search_results
+            for file_embedding, distance in rows
+        ]
