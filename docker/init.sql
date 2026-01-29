@@ -23,7 +23,7 @@ CREATE TABLE IF NOT EXISTS file_embeddings (
     extension VARCHAR(50),
     content TEXT,
     chunk_index INTEGER DEFAULT 0,
-    embedding vector(1536),  -- OpenAI text-embedding-3-small dimension
+    embedding vector(768),  -- Gemini models/embedding-001 dimension
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     
     UNIQUE(project_id, file_path, chunk_index)

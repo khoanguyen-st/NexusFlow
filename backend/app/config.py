@@ -13,7 +13,7 @@ class Settings(BaseSettings):
     gemini_api_key: str = ""
     
     # Embedding settings
-    embedding_model: str = "text-embedding-3-small"
+    embedding_model: str = "models/embedding-001"
     embedding_dimension: int = 768  
     
     # LLM settings

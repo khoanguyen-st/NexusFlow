@@ -102,9 +102,9 @@ class FileEmbedding(Base):
         default=0
     )
     
-    # embedding vector(1536)
-    # OpenAI embedding dimension
-    embedding: Mapped[list[float] | None] = mapped_column(Vector(1536), nullable=True)
+    # embedding vector(768)
+    # Gemini models/embedding-001 embedding dimension
+    embedding: Mapped[list[float] | None] = mapped_column(Vector(768), nullable=True)
     
     # created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
     created_at: Mapped[datetime] = mapped_column(
