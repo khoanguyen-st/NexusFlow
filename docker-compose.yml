@@ -31,6 +31,7 @@ services:
       - LLM_PROVIDER=${LLM_PROVIDER:-openai}
     volumes:
       - ./backend/app:/app/app
+      - ./backend/.env:/app/.env
       - ${PROJECT_MOUNT_PATH:-./sample-project}:/projects:ro
     ports:
       - "8000:8000"

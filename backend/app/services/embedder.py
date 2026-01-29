@@ -9,6 +9,7 @@ logger = logging.getLogger(__name__)
 class EmbedderService:
     def __init__(self):
         self.api_key = settings.gemini_api_key
+        self.model_name = settings.embedding_model
         self.semaphore = asyncio.Semaphore(5)
         
         if self.api_key:
@@ -28,7 +29,7 @@ class EmbedderService:
                 result = await loop.run_in_executor(
                     None,  
                     lambda: genai.embed_content(
-                        model="models/embedding-001",
+                        model=self.model_name,
                         content=text,
                         task_type="retrieval_document"
                     )
