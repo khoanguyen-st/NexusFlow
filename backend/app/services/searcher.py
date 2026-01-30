@@ -8,7 +8,7 @@ from app.models.models import FileEmbedding
 class SearcherService:
     """Service for semantic search over indexed files."""
     
-    def __init__(self, db: AsyncSession):
+    def __init__(self, db: AsyncSession, embedder: EmbedderService = None):
         self.embedder = embedder or EmbedderService()
         self.db = db
     
