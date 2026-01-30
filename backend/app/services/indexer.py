@@ -21,7 +21,7 @@ class IndexerService:
 
     def __init__(self):
         self.embedder = EmbedderService() 
-        self.allowed_extensions = ALLOWED_EXTENSIONS
+        self.allowed_extensions = set(settings.supported_extensions)
         self.max_file_size = MAX_FILE_SIZE
     
     async def index_project(self, db: AsyncSession, project_id: UUID, project_path: str) -> int:
