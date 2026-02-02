@@ -1,8 +1,10 @@
 import { useState, useEffect, useRef } from "react";
-import { Plus, Loader2, Trash2, Play } from "lucide-react";
+import { useNavigate } from "react-router-dom";
+import { Plus, Loader2, Trash2, Play, FileText } from "lucide-react";
 import { projectsApi, Project } from "../services/api";
 
 export default function Projects() {
+  const navigate = useNavigate();
   const [projects, setProjects] = useState<Project[]>([]);
   const [loading, setLoading] = useState(true);
   const [showForm, setShowForm] = useState(false);
@@ -217,9 +219,17 @@ export default function Projects() {
                 </div>
                 <div className="flex items-center gap-2">
                   <button
+                    onClick={() => navigate(`/task/${project.id}`)}
+                    disabled={project.status !== "ready"}
+                    className="p-2 bg-sky-500/20 hover:bg-sky-500/30 disabled:opacity-50 disabled:cursor-not-allowed text-sky-400 rounded-lg transition-colors"
+                    title="Create Plan"
+                  >
+                    <FileText className="w-4 h-4" />
+                  </button>
+                  <button
                     onClick={() => handleIndex(project.id)}
-                    disabled={indexingIds.has(project.id) || project.status === "indexing"}
-                    className="p-2 bg-emerald-500/20 hover:bg-emerald-500/30 disabled:opacity-50 text-emerald-400 rounded-lg transition-colors"
+                    disabled={indexingIds.has(project.id) || project.status === "indexing" || project.status === "ready"}
+                    className="p-2 bg-emerald-500/20 hover:bg-emerald-500/30 disabled:opacity-50 disabled:cursor-not-allowed text-emerald-400 rounded-lg transition-colors"
                     title="Start Indexing"
                   >
                     {indexingIds.has(project.id) || project.status === "indexing" ? (
