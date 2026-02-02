@@ -86,7 +86,7 @@ class PlannerService:
         context_parts = []
         for res in search_results:
             context_files.append(res.file_path)
-            content_snippet = res.content if res.content else ""
+            content_snippet = res.content[:50000] if res.content else ""
             context_parts.append(f"File: {res.file_path}\nContent:\n{content_snippet}\n")
             
         context_str = "\n\n".join(context_parts)
@@ -118,9 +118,14 @@ class PlannerService:
             confidence=0.85
         )
         
-        self.db.add(new_plan)
-        await self.db.commit()
-        await self.db.refresh(new_plan)
+        try:
+            self.db.add(new_plan)
+            await self.db.commit()
+            await self.db.refresh(new_plan)
+        except Exception as e:
+            await self.db.rollback()
+            logger.error(f"Failed to save plan to database: {e}")
+            raise e
         
         # 7. Return PlanResponse
         return PlanResponse(
