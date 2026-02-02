@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { Plus, Loader2, Trash2, Play } from "lucide-react";
 import { projectsApi, Project } from "../services/api";
 
@@ -8,9 +8,17 @@ export default function Projects() {
   const [showForm, setShowForm] = useState(false);
   const [formData, setFormData] = useState({ name: "", path: "" });
   const [indexingIds, setIndexingIds] = useState<Set<string>>(new Set());
+  const pollIntervalsRef = useRef<Map<string, ReturnType<typeof setInterval>>>(new Map());
 
   useEffect(() => {
     loadProjects();
+
+    return () => {
+      pollIntervalsRef.current.forEach((intervalId) => {
+        clearInterval(intervalId);
+      });
+      pollIntervalsRef.current.clear();
+    };
   }, []);
 
   const loadProjects = async () => {
@@ -59,7 +67,9 @@ export default function Projects() {
           // Stop polling when indexing is complete
           if (project.status === "ready" || project.status === "error") {
             clearInterval(pollInterval);
+            pollIntervalsRef.current.delete(id);
             setIndexingIds((prev) => {
+              if (!prev.has(id)) return prev;
               const next = new Set(prev);
               next.delete(id);
               return next;
@@ -67,16 +77,21 @@ export default function Projects() {
           }
         } catch (error) {
           clearInterval(pollInterval);
+          pollIntervalsRef.current.delete(id);
           setIndexingIds((prev) => {
+            if (!prev.has(id)) return prev;
             const next = new Set(prev);
             next.delete(id);
             return next;
           });
         }
       }, 2000);
+
+      pollIntervalsRef.current.set(id, pollInterval);
     } catch (error) {
       console.error("Failed to start indexing:", error);
       setIndexingIds((prev) => {
+        if (!prev.has(id)) return prev;
         const next = new Set(prev);
         next.delete(id);
         return next;
