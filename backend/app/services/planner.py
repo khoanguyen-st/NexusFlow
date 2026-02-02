@@ -5,6 +5,7 @@ from uuid import UUID
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select
 import google.generativeai as genai
+from tenacity import retry, stop_after_attempt, wait_exponential, retry_if_exception_type
 
 from app.config import get_settings
 from app.schemas import PlanResponse, PlanData
@@ -55,6 +56,15 @@ class PlannerService:
         else:
             logger.warning("NO GEMINI_API_KEY. Planner functionality will fail.")
             self.model = None
+
+    @retry(
+        stop=stop_after_attempt(3),
+        wait=wait_exponential(multiplier=1, min=2, max=10),
+        retry=retry_if_exception_type(Exception),
+        reraise=True
+    )
+    async def _generate_content_with_retry(self, prompt: str):
+        return await self.model.generate_content_async(prompt)
     
     async def generate_plan(
         self,
@@ -96,10 +106,10 @@ class PlannerService:
         
         # 4. Call LLM
         try:
-            response = self.model.generate_content(prompt)
+            response = await self._generate_content_with_retry(prompt)
             plan_json = json.loads(response.text)
         except Exception as e:
-            logger.error(f"LLM generation failed: {e}")
+            logger.error(f"LLM generation failed after retries: {e}")
             raise ValueError(f"Failed to generate plan: {str(e)}")
 
         # 5. Parse and validate using Pydantic
