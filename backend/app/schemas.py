@@ -1,5 +1,5 @@
 from pydantic import BaseModel, Field
-from typing import Optional
+from typing import Optional, Literal
 from uuid import UUID
 from datetime import datetime
 
@@ -71,7 +71,7 @@ class PlanGenerateRequest(BaseModel):
 class AffectedFile(BaseModel):
     """File affected by the implementation."""
     path: str
-    action: str  # create, modify, delete
+    action: Literal["create", "modify", "delete"]
 
 
 class ImplementationStep(BaseModel):
