@@ -12,7 +12,7 @@ export default function PlanView() {
     }
   }, [planId]);
 
-  const loadPlan = async (id: string) => {
+  const loadPlan = async (_id: string) => {
     // TODO: Load plan using plansApi.get(id)
     // TODO: Set plan state and loading state
     setLoading(false);
