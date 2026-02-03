@@ -9,6 +9,7 @@ function App() {
     <Layout>
       <Routes>
         <Route path="/" element={<Projects />} />
+        <Route path="/projects" element={<Projects />} />
         <Route path="/task/:projectId" element={<TaskInput />} />
         <Route path="/plan/:planId" element={<PlanView />} />
       </Routes>
